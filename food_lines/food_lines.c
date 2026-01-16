@@ -3,6 +3,8 @@
 #include <string.h>
 #include <time.h>
 
+// DMOJ: lkp18c2p1
+
 #define MAX_LINES 100
 
 int shortest_line_index(int lines[], int n) {
