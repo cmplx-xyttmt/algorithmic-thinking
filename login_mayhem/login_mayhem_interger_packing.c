@@ -6,6 +6,8 @@
 #define NUM_BITS 20
 #define HASH_SIZE (1 << NUM_BITS)
 #define HASH_MASK (HASH_SIZE - 1)
+#define MAX_POOL_SIZE 500000
+
 
 typedef struct password_node {
     uint64_t key;
@@ -14,7 +16,7 @@ typedef struct password_node {
 } password_node;
 
 // Fast integer hash function (Knuth's multiplicative hash)
-static inline uint32_t hash_int(uint64_t key) {
+static uint32_t hash_int(uint64_t key) {
     key = (key ^ (key >> 30)) * 0xbf58476d1ce4e5b9ULL;
     key = (key ^ (key >> 27)) * 0x94d049bb133111ebULL;
     key = key ^ (key >> 31);
@@ -22,6 +24,8 @@ static inline uint32_t hash_int(uint64_t key) {
 }
 
 password_node *hash_table[HASH_SIZE] = {NULL};
+password_node pool[MAX_POOL_SIZE];
+int pool_ptr = 0;
 
 // Find or create an entry in the hash table
 password_node *get_node(uint64_t key, int create) {
@@ -34,7 +38,11 @@ password_node *get_node(uint64_t key, int create) {
     }
 
     if (create) {
-        password_node *new_node = malloc(sizeof(password_node));
+        if (pool_ptr >= MAX_POOL_SIZE) {
+            fprintf(stderr, "Pool exhausted!\n");
+            exit(1);
+        }
+        password_node *new_node = &pool[pool_ptr++];
         new_node->key = key;
         new_node->total = 0;
         new_node->next = hash_table[slot];
